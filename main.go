@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
 )
 
 var bot *openwechat.Bot
@@ -11,7 +13,7 @@ var bot *openwechat.Bot
 func setupRouter() *gin.Engine {
 	router := gin.Default()
 
-	router.POST("/send-message", sendMessage)
+	router.POST("/open-wechat/send-message", sendMessage)
 
 	return router
 }
@@ -64,5 +66,19 @@ func sendMessage(ctx *gin.Context) {
 	}
 	fmt.Printf("获取登陆的用户: %v\n", self)
 
-	ctx.String(200, "hello")
+	// 获取所有的好友
+	friends, err := self.Friends()
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	}
+
+	friend := friends.SearchByNickName(1, "7喜")
+
+	text := strings.Join(req.Contents, "\n")
+	if err := friend.SendText(text, 1); err != nil {
+		return
+	}
+
+	ctx.JSON(http.StatusOK, struct{}{})
 }
